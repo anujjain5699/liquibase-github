@@ -54,8 +54,11 @@ jobs:
 
     - name: Set up Liquibase
       run: |
+        # Download liquibase zip file
         curl -Lo liquibase.zip https://github.com/liquibase/liquibase/releases/download/v4.29.1/liquibase-4.29.1-windows-x64.zip
-        tar -xf liquibase.zip -C C:\
+        
+        # Unzip the downloaded file using PowerShell
+        powershell -Command "Expand-Archive -Path liquibase.zip -DestinationPath C:\liquibase"
 
     - name: Download MySQL JDBC Driver
       run: |
