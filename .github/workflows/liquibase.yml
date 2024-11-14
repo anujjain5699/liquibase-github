@@ -12,37 +12,34 @@ jobs:
   liquibase-migration:
     runs-on: windows-latest
 
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: root_password
-          MYSQL_DATABASE: testdb
-          MYSQL_USER: test_user
-          MYSQL_PASSWORD: test_password
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     env:
-      DB_URL: jdbc:mysql://127.0.0.1:3306/testdb
-      DB_USERNAME: test_user
+      DB_NAME: testdb
+      DB_USER: test_user
       DB_PASSWORD: test_password
+      DB_ROOT_PASSWORD: root_password
+      DB_URL: jdbc:mysql://127.0.0.1:3306/testdb
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Wait for MySQL to be ready
+    - name: Install MySQL
       run: |
-        for /L %i in (1,1,10) do (
-          mysqladmin ping -h "127.0.0.1" --silent && exit /b 0
-          timeout /t 3 >nul
-        )
+        choco install mysql --params "/INSTALLDIR:C:\mysql" -y
+        mysql --version
+
+    - name: Configure MySQL
+      run: |
+        # Start MySQL service
+        sc start MySQL
+        timeout /t 10
+
+        # Secure MySQL and set root password
+        echo ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${DB_ROOT_PASSWORD}'; | mysql -u root
+        echo CREATE DATABASE ${DB_NAME}; | mysql -u root -p${DB_ROOT_PASSWORD}
+        echo CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}'; | mysql -u root -p${DB_ROOT_PASSWORD}
+        echo GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost'; | mysql -u root -p${DB_ROOT_PASSWORD}
+        echo FLUSH PRIVILEGES; | mysql -u root -p${DB_ROOT_PASSWORD}
 
     - name: Set up Liquibase
       run: |
