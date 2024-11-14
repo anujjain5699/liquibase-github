@@ -1,0 +1,58 @@
+name: Liquibase Database Migration on Windows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  liquibase-migration:
+    runs-on: windows-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/testdb
+      DB_USERNAME: test_user
+      DB_PASSWORD: test_password
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Wait for MySQL to be ready
+      run: |
+        for /L %i in (1,1,10) do (
+          mysqladmin ping -h "127.0.0.1" --silent && exit /b 0
+          timeout /t 3 >nul
+        )
+
+    - name: Set up Liquibase
+      run: |
+        curl -Lo liquibase.zip https://github.com/liquibase/liquibase/releases/download/v4.29.1/liquibase-4.29.1-windows-x64.zip
+        tar -xf liquibase.zip -C C:\
+
+    - name: Download MySQL JDBC Driver
+      run: |
+        curl -Lo liquibase\lib\mysql-connector-java-8.0.26.jar https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar
+
+    - name: Run Liquibase Migrations
+      run: |
+        C:\liquibase\liquibase.bat --defaultsFile=liquibase/liquibase.properties update
