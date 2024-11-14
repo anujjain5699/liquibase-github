@@ -64,8 +64,18 @@ jobs:
       run: |
         curl -Lo liquibase\lib\mysql-connector-java-8.0.26.jar https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar
 
+    - name: Verify Liquibase Directory and Files
+      run: |
+        # List files in the liquibase folder to verify installation
+        dir C:\liquibase\liquibase-4.29.1
+
     - name: Run Liquibase Migrations
       run: |
-       
-        # Run Liquibase update with the correct path
-        liquibase --defaultsFile=liquibase/dev.properties update
+        # Ensure that the batch file exists and is executable
+        if (Test-Path "C:\liquibase\liquibase-4.29.1\liquibase.bat") {
+          Write-Host "Found liquibase.bat, running the update..."
+          C:\liquibase\liquibase-4.29.1\liquibase.bat --defaultsFile=liquibase/dev.properties update
+        } else {
+          Write-Host "liquibase.bat not found!"
+          exit 1
+        }
