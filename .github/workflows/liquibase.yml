@@ -68,4 +68,4 @@ jobs:
       run: |
        
         # Run Liquibase update with the correct path
-        liquibase --defaultsFile=liquibase/liquibase.properties update
+        liquibase --defaultsFile=liquibase/dev.properties update
