@@ -56,10 +56,29 @@ jobs:
       run: |
         # Download liquibase zip file
         curl -Lo liquibase.zip https://github.com/liquibase/liquibase/releases/download/v4.29.1/liquibase-4.29.1-windows-x64.zip
-        
+    
+        # Check if the file exists before unzipping
+        if (Test-Path "liquibase.zip") {
+          Write-Host "Liquibase zip file downloaded successfully."
+        } else {
+          Write-Host "Liquibase zip file download failed."
+          exit 1
+        }
+    
         # Unzip the downloaded file using PowerShell
-        powershell -Command "Expand-Archive -Path liquibase.zip -DestinationPath C:\liquibase"
-
+        powershell -Command "Expand-Archive -Path liquibase.zip -DestinationPath C:\liquibase -Force"
+        
+        # Verify the extraction
+        Write-Host "Contents of C:\liquibase directory:"
+        powershell -Command "Get-ChildItem -Path C:\liquibase"
+    
+        # Verify that liquibase.bat exists
+        if (Test-Path "C:\liquibase\liquibase-4.29.1\liquibase.bat") {
+          Write-Host "Liquibase batch file found, extraction successful."
+        } else {
+          Write-Host "Liquibase batch file not found!"
+          exit 1
+        }
     - name: Download MySQL JDBC Driver
       run: |
         curl -Lo liquibase\lib\mysql-connector-java-8.0.26.jar https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.26/mysql-connector-java-8.0.26.jar
