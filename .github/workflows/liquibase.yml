@@ -28,13 +28,23 @@ jobs:
         choco install mysql --params "/INSTALLDIR:C:\mysql" -y
         mysql --version
 
+    - name: Ensure MySQL Service is Running
+      run: |
+        # Check if MySQL service is running and start it if not
+        $serviceStatus = Get-Service -Name MySQL -ErrorAction SilentlyContinue
+        if ($serviceStatus -eq $null) {
+          Write-Host "MySQL service not found. Installing and starting MySQL..."
+          sc start MySQL
+        } elseif ($serviceStatus.Status -ne 'Running') {
+          Write-Host "MySQL service is not running. Starting MySQL..."
+          sc start MySQL
+        } else {
+          Write-Host "MySQL service is already running."
+        }
+
     - name: Configure MySQL
       shell: bash
       run: |
-        # Start MySQL service
-        sc start MySQL
-        timeout /t 10
-
         # Configure MySQL by running SQL commands
         mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${{ env.DB_ROOT_PASSWORD }}';"
         mysql -u root -p${{ env.DB_ROOT_PASSWORD }} -e "CREATE DATABASE ${DB_NAME};"
