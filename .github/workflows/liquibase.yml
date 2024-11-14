@@ -66,4 +66,8 @@ jobs:
 
     - name: Run Liquibase Migrations
       run: |
-        C:\liquibase\liquibase.bat --defaultsFile=liquibase/liquibase.properties update
+        # Verify path of liquibase.bat
+        dir C:\liquibase
+        
+        # Run Liquibase update with the correct path
+        C:\liquibase\liquibase-4.29.1\liquibase.bat --defaultsFile=liquibase/liquibase.properties update
